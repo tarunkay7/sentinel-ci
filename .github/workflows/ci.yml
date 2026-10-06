@@ -72,3 +72,36 @@ jobs:
         with:
           name: sentinel-ci-sbom
           path: sbom.json
+
+      - name: Login to Amazon ECR
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Push image to ECR
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        run: |
+          IMAGE=${{ steps.login-ecr.outputs.registry }}/sentinel-ci:${{ github.sha }}
+          docker tag sentinel-ci:${{ github.sha }} $IMAGE
+          docker push $IMAGE
+          echo "IMAGE_DIGEST=$(docker inspect --format '{{index .RepoDigests 0}}' $IMAGE)" >> $GITHUB_ENV
+
+      - name: Install Cosign
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        uses: sigstore/cosign-installer@v3
+
+      - name: Sign image (keyless)
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        run: cosign sign --yes $IMAGE_DIGEST
+
+      - name: Verify container image
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        env:
+          REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          IMAGE_NAME: sentinel-ci
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          cosign verify \
+            $REGISTRY/$IMAGE_NAME:$IMAGE_TAG \
+            --certificate-oidc-issuer=https://token.actions.githubusercontent.com \
+            --certificate-identity-regexp="https://github.com/tarunkay7/sentinel-ci/.github/workflows/.*@refs/heads/main"
