@@ -1,14 +1,31 @@
 name: CI
 
-"on":
+on:
   push:
     branches:
       - main
   pull_request:
 
 jobs:
-  build:
+  security:
+    name: Secret Scan
     runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Run Gitleaks
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  build:
+    name: Docker Build
+    runs-on: ubuntu-latest
+    needs: security
 
     steps:
       - name: Checkout repository
@@ -16,4 +33,4 @@ jobs:
 
       - name: Build Docker image
         run: |
-          docker build -t secure-pipeline-demo:${{ github.sha }} .
+          docker build -t sentinel-ci:${{ github.sha }} .
