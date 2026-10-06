@@ -1,5 +1,29 @@
-  build:
-    name: Docker Build
+name: SentinelCI
+
+"on":
+  push:
+    branches:
+      - main
+  pull_request:
+
+jobs:
+  security:
+    name: Secret Scan
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Run Gitleaks
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  build-and-scan:
+    name: Build and Scan
     runs-on: ubuntu-latest
     needs: security
 
