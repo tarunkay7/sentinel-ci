@@ -161,12 +161,17 @@ resource "aws_iam_role_policy" "github_terraform_apply" {
           "logs:CreateLogGroup",
           "logs:DeleteLogGroup",
           "logs:ListTagsForResource",
+          "logs:ListTagsLogGroup",
           "logs:PutRetentionPolicy",
           "logs:DeleteRetentionPolicy",
           "logs:TagResource",
           "logs:UntagResource"
         ]
-        Resource = "arn:aws:logs:ap-south-1:660741725500:log-group:/ecs/sentinel-ci:*"
+        # Some log actions are authorized against the ARN without the ":*" suffix.
+        Resource = [
+          "arn:aws:logs:ap-south-1:660741725500:log-group:/ecs/sentinel-ci",
+          "arn:aws:logs:ap-south-1:660741725500:log-group:/ecs/sentinel-ci:*"
+        ]
       },
       {
         Sid      = "LogsDescribe"
