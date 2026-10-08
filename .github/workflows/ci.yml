@@ -120,8 +120,7 @@ jobs:
       - name: Terraform Plan
         working-directory: terraform
         run: |
-          terraform plan \
-            -var="image_tag=${{ github.sha }}
+          terraform plan -var="image_tag=${{ github.sha }}
 
       - name: Terraform Apply
         working-directory: terraform
