@@ -53,7 +53,6 @@ jobs:
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
 
-
       - name: Build Docker image
         run: |
           docker build -t sentinel-ci:${{ github.sha }} .
@@ -112,7 +111,7 @@ jobs:
             $REGISTRY/$IMAGE_NAME:$IMAGE_TAG \
             --certificate-oidc-issuer=https://token.actions.githubusercontent.com \
             --certificate-identity-regexp="https://github.com/tarunkay7/sentinel-ci/.github/workflows/.*@refs/heads/main"
-      
+
       - name: Terraform Init
         working-directory: terraform
         run: terraform init
@@ -120,7 +119,7 @@ jobs:
       - name: Terraform Plan
         working-directory: terraform
         run: |
-          terraform plan -var="image_tag=${{ github.sha }}
+          terraform plan -var="image_tag=${{ github.sha }}"
 
       - name: Terraform Apply
         working-directory: terraform
@@ -144,4 +143,3 @@ jobs:
           aws ecs wait services-stable \
             --cluster $ECS_CLUSTER \
             --services $ECS_SERVICE
-        
