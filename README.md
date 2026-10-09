@@ -23,51 +23,7 @@ Pull requests run steps 1 to 4 plus a `terraform plan`, but don't push, sign or 
 
 ![SentinelCI architecture](docs/architecture.png)
 
-Editable source: [`docs/architecture.drawio`](docs/architecture.drawio) (open in [draw.io](https://app.diagrams.net)). The same flow as Mermaid:
-
-```mermaid
-flowchart LR
-    dev([Developer]) -->|git push| gh[GitHub repo]
-
-    subgraph ci [GitHub Actions]
-        direction TB
-        gl[Gitleaks<br/>secret scan] --> build[Docker build]
-        build --> trivy[Trivy scan<br/>+ SBOM]
-        trivy --> push[Push to ECR]
-        push --> sign[Cosign sign<br/>+ verify]
-        sign --> tf[Terraform apply]
-        tf --> deploy[ECS deploy<br/>wait for stable]
-    end
-
-    gh --> gl
-
-    subgraph aws [AWS - ap-south-1]
-        direction TB
-        ecr[(ECR<br/>immutable tags)]
-        s3[(S3<br/>Terraform state)]
-
-        subgraph vpc [VPC 10.0.0.0/16 - public subnet]
-            subgraph task [ECS Fargate task]
-                app[Flask app<br/>:5000]
-                otel[ADOT collector<br/>:4318]
-            end
-        end
-
-        xray[AWS X-Ray]
-        cwl[CloudWatch Logs<br/>/ecs/sentinel-ci]
-    end
-
-    ci -. "OIDC, assumes<br/>SentinelCI-GitHubActions" .-> aws
-    push --> ecr
-    tf --> s3
-    deploy --> task
-    ecr -->|image pull| task
-    app -->|OTLP over localhost| otel
-    otel --> xray
-    app --> cwl
-    otel --> cwl
-    user([User]) -->|HTTP :5000| app
-```
+Editable source: [`docs/architecture.drawio`](docs/architecture.drawio) (open in [draw.io](https://app.diagrams.net)).
 
 The app and the OpenTelemetry collector run as two containers in the same Fargate task, so they share a network namespace and the app can just send traces to `localhost:4318`. The collector forwards them to X-Ray.
 
