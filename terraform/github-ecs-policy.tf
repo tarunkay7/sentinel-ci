@@ -228,6 +228,31 @@ resource "aws_iam_role_policy" "github_terraform_apply" {
         }
       },
       {
+        # Task role used by the ECS service (ecs.tf).
+        Sid    = "TaskRole"
+        Effect = "Allow"
+        Action = [
+          "iam:CreateRole",
+          "iam:DeleteRole",
+          "iam:GetRole",
+          "iam:ListAttachedRolePolicies",
+          "iam:ListInstanceProfilesForRole",
+          "iam:ListRolePolicies",
+          "iam:ListRoleTags",
+          "iam:TagRole",
+          "iam:UntagRole",
+          "iam:UpdateAssumeRolePolicy",
+          "iam:AttachRolePolicy",
+          "iam:DetachRolePolicy"
+        ]
+        Resource = "arn:aws:iam::660741725500:role/SentinelCI-ECSTaskRole"
+        Condition = {
+          ArnEqualsIfExists = {
+            "iam:PolicyARN" = "arn:aws:iam::aws:policy/AWSXRayDaemonWriteAccess"
+          }
+        }
+      },
+      {
         # Read-only, so plan can refresh the policies defined in this file.
         Sid    = "ReadOwnRole"
         Effect = "Allow"
