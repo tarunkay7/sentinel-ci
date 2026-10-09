@@ -21,6 +21,10 @@ Pull requests run steps 1 to 4 plus a `terraform plan`, but don't push, sign or 
 
 ## Architecture
 
+![SentinelCI architecture](docs/architecture.png)
+
+Editable source: [`docs/architecture.drawio`](docs/architecture.drawio) (open in [draw.io](https://app.diagrams.net)). The same flow as Mermaid:
+
 ```mermaid
 flowchart LR
     dev([Developer]) -->|git push| gh[GitHub repo]
