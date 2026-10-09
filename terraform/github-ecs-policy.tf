@@ -30,6 +30,19 @@ resource "aws_iam_role_policy" "github_ecs_deploy" {
         ]
 
         Resource = aws_iam_role.ecs_task_execution.arn
+      },
+      {
+        Sid    = "PassECSTaskRole"
+        Effect = "Allow"
+
+        Action = [
+          "iam:PassRole"
+        ]
+
+        Resource = aws_iam_role.ecs_task.arn
+        Condition = {
+          StringEquals = { "iam:PassedToService" = "ecs-tasks.amazonaws.com" }
+        }
       }
     ]
   })
@@ -250,6 +263,18 @@ resource "aws_iam_role_policy" "github_terraform_apply" {
           ArnEqualsIfExists = {
             "iam:PolicyARN" = "arn:aws:iam::aws:policy/AWSXRayDaemonWriteAccess"
           }
+        }
+      },
+      {
+        # Registering the task definition passes the task role to ECS.
+        Sid    = "TaskRolePassRole"
+        Effect = "Allow"
+        Action = [
+          "iam:PassRole"
+        ]
+        Resource = "arn:aws:iam::660741725500:role/SentinelCI-ECSTaskRole"
+        Condition = {
+          StringEquals = { "iam:PassedToService" = "ecs-tasks.amazonaws.com" }
         }
       },
       {
