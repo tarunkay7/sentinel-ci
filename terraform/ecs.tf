@@ -26,6 +26,7 @@ resource "aws_ecs_task_definition" "sentinel_ci" {
   memory = "512"
 
   execution_role_arn = aws_iam_role.ecs_task_execution.arn
+  task_role_arn      = aws_iam_role.ecs_task.arn
 
   container_definitions = jsonencode([
     {
@@ -48,6 +49,36 @@ resource "aws_ecs_task_definition" "sentinel_ci" {
           "awslogs-group"         = aws_cloudwatch_log_group.sentinel_ci.name
           "awslogs-region"        = "ap-south-1"
           "awslogs-stream-prefix" = "sentinel-ci"
+        }
+      }
+    },
+    {
+      name      = "otel-collector"
+      image     = "public.ecr.aws/aws-observability/aws-otel-collector:latest"
+      essential = false
+
+      environment = [
+        {
+          name  = "AOT_CONFIG_CONTENT"
+          value = file("${path.module}/../otel/otel-config.yaml")
+        }
+      ]
+
+      portMappings = [
+        {
+          containerPort = 4318
+          hostPort      = 4318
+          protocol      = "tcp"
+        }
+      ]
+
+      logConfiguration = {
+        logDriver = "awslogs"
+
+        options = {
+          "awslogs-group"         = aws_cloudwatch_log_group.sentinel_ci.name
+          "awslogs-region"        = "ap-south-1"
+          "awslogs-stream-prefix" = "otel"
         }
       }
     }
@@ -73,4 +104,24 @@ resource "aws_ecs_service" "sentinel_ci" {
 
     assign_public_ip = true
   }
+}
+
+resource "aws_iam_role" "ecs_task" {
+  name = "SentinelCI-ECSTaskRole"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Effect = "Allow"
+      Principal = {
+        Service = "ecs-tasks.amazonaws.com"
+      }
+      Action = "sts:AssumeRole"
+    }]
+  })
+}
+
+resource "aws_iam_role_policy_attachment" "ecs_xray_write" {
+  role       = aws_iam_role.ecs_task.name
+  policy_arn = "arn:aws:iam::aws:policy/AWSXRayDaemonWriteAccess"
 }

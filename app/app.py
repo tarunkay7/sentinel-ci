@@ -2,7 +2,7 @@ from flask import Flask
 
 app = Flask(__name__)
 
-
+setup_telemetry(app)
 @app.get("/")
 def hello():
     return {"message": "Hello from this ample security project"}
