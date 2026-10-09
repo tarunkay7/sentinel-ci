@@ -1,5 +1,7 @@
 from flask import Flask
 
+from telemetry import setup_telemetry
+
 app = Flask(__name__)
 
 setup_telemetry(app)
